@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-M7HEN706BR"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -13,18 +12,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timeline of Everything (5000 BC - Present)</title>
-    <!-- Primary Meta Tags -->
     <meta name="title" content="The Timeline of Everything">
     <meta name="description" content="A visual timeline of all known countries and civilizations from 5000 BC to today. Explore human history in one scrollable view.">
     
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://timelineofeverything.vercel.app">
     <meta property="og:title" content="The Timeline of Everything">
     <meta property="og:description" content="A visual timeline of all known countries and civilizations from 5000 BC to today.">
     <meta property="og:image" content="https://timelineofeverything.vercel.app/social-preview.jpg.png">
     
-    <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://timelineofeverything.vercel.app">
     <meta property="twitter:title" content="The Timeline of Everything">
@@ -85,6 +81,14 @@
             border-bottom: 1px solid #cbd5e1; /* Separator */
             background-color: #f0f4f8; /* Ensure consistent background */
         }
+        
+        /* Key Index styles */
+        .key-index {
+            padding: 1rem 0;
+            border-bottom: 1px solid #cbd5e1;
+            background-color: #f0f4f8;
+            z-index: 99; /* Ensure it's below the header, but above timeline content */
+        }
 
         /* Main Timeline Content Scroll Wrapper */
         #mainTimelineContentScroll {
@@ -118,7 +122,7 @@
             box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
             transform: translateZ(0); /* Force hardware acceleration */
         }
-        /* NEW: Inner "viewport" div for axis content to apply max-width, padding, and manage overflow */
+        /* Inner div for axis content to apply max-width, padding, and manage overflow */
         #sticky-timeline-axis-container > div.max-w-7xl { /* Targeting specifically the max-w-7xl div */
             max-width: 80rem; /* Equivalent to max-w-7xl */
             margin-left: auto;
@@ -135,7 +139,7 @@
             display: flex;
             align-items: center; /* Vertically center content */
             width: fit-content; /* True width of axis content, potentially very wide */
-            min-width: 100%; /* Ensures it's at least as wide as its visible container (the .axis-viewport-inner) */
+            min-width: 100%; /* Ensures it's at least as wide as its visible container */
             transition: transform 0.05s linear; /* Smooths out the JS scroll sync */
         }
         .timeline-axis-label {
@@ -181,7 +185,7 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
-
+        
         /* Tooltip styles */
         .timeline-tooltip {
             position: fixed;
@@ -340,6 +344,11 @@
             <label for="zoomSlider" class="mr-2 text-sm text-gray-700">Zoom:</label>
             <input type="range" id="zoomSlider" min="0.3642" max="10" step="0.1" value="1">
         </div>
+
+        <div class="key-index max-w-7xl mx-auto bg-white">
+            <div id="timelineKey" class="flex flex-wrap justify-center gap-4 text-sm text-gray-700">
+                </div>
+        </div>
     </div>
 
     <div id="mainTimelineContentScroll" class="timeline-horizontal-scroll-wrapper max-w-7xl mx-auto">
@@ -387,6 +396,28 @@
         let rawTimelineData = [];
         let zoomFactor = 1; // Global zoom factor
 
+        // --- NEW: Color mapping for subCategories ---
+        const subCategoryColors = {
+            'Civilization': '#b3a9a1',
+            'Empire': '#ef4444',
+            'Republic': '#3b82f6',
+            'State': '#22c55e',
+            'Khanate': '#f97316',
+            'Dynasty': '#eab308',
+            'Kingdom': '#8b5cf6',
+            'Union': '#f43f5e',
+            'Commonwealth': '#14b8a6',
+            'Dominion': '#0ea5e9',
+            'Colonial Empire': '#6366f1',
+            'City-States': '#ec4899',
+            'Sultanate': '#9ca3af',
+            'Principality': '#a855f7',
+            'Theocracy': '#78716c',
+            'Period': '#475569',
+            // Default color for subCategories not in the list
+            'default': '#6b7280' // Gray 500
+        };
+
         // Constants for timeline display
         const MIN_DISPLAY_YEAR = -5000;
         const MAX_DISPLAY_YEAR = 2025;
@@ -406,12 +437,35 @@
                 }
                 rawTimelineData = await response.json(); // Assign fetched data
                 renderTimeline(); // Call renderTimeline AFTER data is loaded
+                populateKeyIndex(); // NEW: Populate the key index after rendering
             } catch (error) {
                 console.error("Error fetching timeline data:", error);
                 // Display an error message on the page if data fails to load
                 document.getElementById('timeline').innerHTML = '<p class="text-center text-red-500">Failed to load timeline data. Please check the console for errors.</p>';
             }
         }
+
+        // NEW: Function to populate the key index
+        function populateKeyIndex() {
+            const keyIndex = document.getElementById('timelineKey');
+            keyIndex.innerHTML = '';
+            
+            // Get all unique subcategories from the data
+            const uniqueSubCategories = [...new Set(rawTimelineData.map(item => item.subCategory))].sort();
+            
+            uniqueSubCategories.forEach(subCategory => {
+                const color = subCategoryColors[subCategory] || subCategoryColors.default;
+                
+                const keyItem = document.createElement('div');
+                keyItem.className = 'flex items-center gap-2';
+                keyItem.innerHTML = `
+                    <div style="background-color: ${color}; width: 16px; height: 16px; border-radius: 4px;"></div>
+                    <span>${subCategory}</span>
+                `;
+                keyIndex.appendChild(keyItem);
+            });
+        }
+
 
         // Modal elements
         const timelineModal = document.getElementById('timelineModal');
@@ -446,7 +500,8 @@
 
             llmResponseText.textContent = '';
             llmResponseArea.classList.add('hidden');
-            llmLoadingSpinner.classList.add('hidden');
+            llmLoadingSpinner.classList.add('flex');
+            llmLoadingSpinner.classList.remove('hidden');
             getInsightsBtn.disabled = false;
 
             getInsightsBtn.dataset.eventName = item.eventName;
@@ -520,8 +575,9 @@
 
             llmResponseArea.classList.remove('hidden');
             llmResponseText.textContent = '';
+            llmLoadingSpinner.classList.add('flex');
             llmLoadingSpinner.classList.remove('hidden');
-            getInsightsBtn.disabled = false;
+            getInsightsBtn.disabled = true;
 
             const prompt = `Provide a more detailed and interesting summary of the historical entity: "${eventName}" (active from ${startYear < 0 ? Math.abs(startYear) + ' BC' : startYear} to ${endYear === '2025' ? 'Present' : (endYear < 0 ? Math.abs(endYear) + ' BC' : endYear)}). The current brief description is: "${description}". Focus on its key achievements, challenges, and lasting legacy in about 150-200 words.`;
 
@@ -559,6 +615,7 @@
                 console.error("Error calling Gemini API:", error);
                 llmResponseText.textContent = `Failed to get insights: ${error.message}. Please try again.`;
             } finally {
+                llmLoadingSpinner.classList.remove('flex');
                 llmLoadingSpinner.classList.add('hidden');
                 getInsightsBtn.disabled = false;
             }
@@ -584,7 +641,7 @@
             timelineDiv.innerHTML = ''; // Clear existing content
 
             // Target the *inner* div of the fixed axis container for rendering the axis
-            const stickyAxisContainerInner = document.getElementById('sticky-timeline-axis-container').querySelector('.axis-viewport-inner');
+            const stickyAxisContainerInner = document.getElementById('sticky-timeline-axis-container').querySelector('div.max-w-7xl');
             stickyAxisContainerInner.innerHTML = ''; // Clear existing axis
 
             const timePeriods = [
@@ -730,6 +787,10 @@
                     barDiv.addEventListener('mouseover', (event) => showGlobalTooltip(item, event.clientX, event.clientY));
                     barDiv.addEventListener('mouseout', hideGlobalTooltip);
 
+                    // --- NEW: Apply color based on subCategory ---
+                    const barColor = subCategoryColors[item.subCategory] || subCategoryColors.default;
+                    barDiv.style.backgroundColor = barColor;
+
                     // Use yearToPixels for bar positioning and width
                     const startPositionBar = yearToPixels(actualStartYear);
                     const endPositionBar = yearToPixels(actualEndYear);
@@ -760,7 +821,7 @@
 
             // --- Re-attach/Initialize Scroll Synchronization ---
             const mainTimelineScrollWrapper = document.getElementById('mainTimelineContentScroll');
-            const bottomAxisContent = document.getElementById('bottomTimelineAxis'); // Now correctly gets the NEWLY created element
+            const bottomAxisContent = document.getElementById('bottomTimelineAxis');
 
             // If a listener was previously attached, remove it to prevent duplicates
             if (mainTimelineScrollWrapper.dataset.currentScrollHandler) {
@@ -771,7 +832,7 @@
 
             // Define the debounced handler
             const debouncedScrollHandler = debounce(() => {
-                if (bottomAxisContent) { // This bottomAxisContent is guaranteed to be the new, correct element
+                if (bottomAxisContent) {
                     bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
                 }
             }, 5); // Debounce to smooth updates
@@ -782,7 +843,7 @@
             mainTimelineScrollWrapper.addEventListener('scroll', window[handlerName]);
             mainTimelineScrollWrapper.dataset.currentScrollHandler = handlerName; // Store name for removal
 
-            // Ensure the initial state is synced too, right after rendering
+            // Ensure the initial state is synced too
             if (bottomAxisContent) {
                  bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
             }
@@ -797,7 +858,6 @@
             const oldClientWidth = mainTimelineScrollWrapper.clientWidth; // Visible width of the scrollable area
 
             // Calculate the pixel position of the current center point on the *unzoomed* timeline
-            // This is the relative pixel position from the start of the current scroll range
             const currentCenterPixelRelativeOldZoom = oldScrollLeft + (oldClientWidth / 2);
 
             // Convert this pixel position back to a "year" on the unzoomed scale
@@ -812,14 +872,12 @@
             renderTimeline();
 
             // 4. Calculate new scroll position AFTER render has updated element widths
-            // Now calculate the new pixel position of that same 'currentCenterYear' with the NEW zoom
-            const newCenterPixelRelativeNewZoom = yearToPixels(currentCenterYear); // yearToPixels now uses the new zoomFactor
+            const newCenterPixelRelativeNewZoom = yearToPixels(currentCenterYear);
 
             // Calculate the new scrollLeft needed to bring this newCenterPixel to the center of the viewport
             const newScrollLeft = newCenterPixelRelativeNewZoom - (mainTimelineScrollWrapper.clientWidth / 2);
 
             // 5. Apply the new scrollLeft
-            // Use requestAnimationFrame for smoother scrolling if it causes a jump
             requestAnimationFrame(() => {
                 mainTimelineScrollWrapper.scrollLeft = newScrollLeft;
             });
