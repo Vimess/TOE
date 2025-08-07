@@ -74,14 +74,84 @@
             margin-bottom: 0; /* Remove internal margins for compactness */
         }
 
-        /* Zoom Control Wrapper styles */
+        /* NEW: Custom zoom slider styles */
         .zoom-control-wrapper {
             padding: 0.75rem 0;
             text-align: center;
-            border-bottom: 1px solid #cbd5e1; /* Separator */
-            background-color: #f0f4f8; /* Ensure consistent background */
+            border-bottom: 1px solid #cbd5e1;
+            background-color: #f0f4f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        #zoomSlider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 250px; /* Wider slider */
+            height: 8px;
+            background: #d1d5db; /* Gray 300 */
+            outline: none;
+            border-radius: 4px;
+        }
+
+        #zoomSlider::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 4px;
+            background: #d1d5db;
+        }
+
+        #zoomSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6; /* Blue 500 */
+            cursor: grab;
+            margin-top: -6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        #zoomSlider::-moz-range-track {
+            height: 8px;
+            border-radius: 4px;
+            background: #d1d5db;
+        }
+
+        #zoomSlider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: grab;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        #zoomSlider:hover::-webkit-slider-thumb,
+        #zoomSlider:active::-webkit-slider-thumb {
+            background-color: #2563eb; /* Blue 600 */
         }
         
+        #zoomSlider:hover::-moz-range-thumb,
+        #zoomSlider:active::-moz-range-thumb {
+            background-color: #2563eb; /* Blue 600 */
+        }
+        
+        #zoomSlider:active {
+            cursor: grabbing;
+        }
+
+        .zoom-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
         /* Key Index styles */
         .key-index {
             padding: 0.5rem 0; 
@@ -503,7 +573,6 @@
         const MAX_DISPLAY_YEAR = 2025;
         const BASE_PIXELS_PER_YEAR = 0.5;
 
-        // --- FIXED: hasOverlap function moved to a global, accessible location ---
         function hasOverlap(item1, item2) {
             return item1.startYear < item2.endYear && item2.startYear < item1.endYear;
         }
@@ -856,27 +925,19 @@
             const mainTimelineScrollWrapper = document.getElementById('mainTimelineContentScroll');
             const bottomAxisContent = document.getElementById('bottomTimelineAxis');
         
-            // If a listener was previously attached, remove it to prevent duplicates
-            if (mainTimelineScrollWrapper.dataset.currentScrollHandler) {
-                mainTimelineScrollWrapper.removeEventListener('scroll', window[mainTimelineScrollWrapper.dataset.currentScrollHandler]);
-                delete window[mainTimelineScrollWrapper.dataset.currentScrollHandler]; // Clean up global reference
-                delete mainTimelineScrollWrapper.dataset.currentScrollHandler;
+            if (bottomAxisContent && !mainTimelineScrollWrapper.dataset.scrollListenerAttached) {
+                const debouncedScrollHandler = debounce(() => {
+                    if (bottomAxisContent) {
+                        bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
+                    }
+                }, 5);
+        
+                const handlerName = `scrollHandler_${Date.now()}`;
+                window[handlerName] = debouncedScrollHandler;
+                mainTimelineScrollWrapper.addEventListener('scroll', window[handlerName]);
+                mainTimelineScrollWrapper.dataset.currentScrollHandler = handlerName;
             }
-
-            // Define the debounced handler
-            const debouncedScrollHandler = debounce(() => {
-                if (bottomAxisContent) {
-                    bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
-                }
-            }, 5); // Debounce to smooth updates
-
-            // Give the handler a unique name on the window object and attach it
-            const handlerName = `scrollHandler_${Date.now()}`;
-            window[handlerName] = debouncedScrollHandler; // Store reference to be able to remove it
-            mainTimelineScrollWrapper.addEventListener('scroll', window[handlerName]);
-            mainTimelineScrollWrapper.dataset.currentScrollHandler = handlerName; // Store name for removal
-
-            // Ensure the initial state is synced too
+        
             if (bottomAxisContent) {
                  bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
             }
@@ -941,7 +1002,6 @@
                 keyIndex.appendChild(keyItem);
             });
 
-            // NEW: Add "Historical Figures" to the key index
             const personKeyItem = document.createElement('div');
             personKeyItem.className = 'flex items-center gap-2';
             personKeyItem.innerHTML = `
