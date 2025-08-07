@@ -1,0 +1,298 @@
+[
+    {
+        "personName": "Gilgamesh",
+        "lifespan": "c. 2800–2700 BC",
+        "knownFor": "King of Uruk, hero of the Epic of Gilgamesh, a foundational text of world literature.",
+        "associatedWith": "Sumerian City-States",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Gilgamesh",
+        "profession": "Ruler"
+    },
+    {
+        "personName": "Sargon of Akkad",
+        "lifespan": "c. 2334–2279 BC",
+        "knownFor": "Founder of the Akkadian Empire, the first ancient Semitic empire in Mesopotamia.",
+        "associatedWith": "Akkadian Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Sargon_of_Akkad",
+        "profession": "Ruler/Military Leader"
+    },
+    {
+        "personName": "Hammurabi",
+        "lifespan": "c. 1810–1750 BC",
+        "knownFor": "Sixth king of the First Babylonian Dynasty, famous for Hammurabi's Code, one of the earliest legal codes.",
+        "associatedWith": "Babylonian Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Hammurabi",
+        "profession": "Ruler"
+    },
+    {
+        "personName": "Ramesses II",
+        "lifespan": "c. 1303–1213 BC",
+        "knownFor": "Third pharaoh of the Nineteenth Dynasty of Egypt, considered one of the greatest and most powerful pharaohs.",
+        "associatedWith": "Ancient Egypt",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Ramesses_II",
+        "profession": "Ruler"
+    },
+    {
+        "personName": "Confucius",
+        "lifespan": "c. 551–479 BC",
+        "knownFor": "A Chinese philosopher and political figure whose teachings and philosophy became the foundation of East Asian culture and society.",
+        "associatedWith": "Zhou Dynasty",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Confucius",
+        "profession": "Philosopher/Political Figure"
+    },
+    {
+        "personName": "Cyrus the Great",
+        "lifespan": "c. 600–530 BC",
+        "knownFor": "Founder of the Achaemenid Empire, the first Persian empire, renowned for his conquests and human rights policies.",
+        "associatedWith": "Achaemenid Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cyrus_the_Great",
+        "profession": "Ruler/Military Leader"
+    },
+    {
+        "personName": "Alexander the Great",
+        "lifespan": "356–323 BC",
+        "knownFor": "King of the ancient Greek kingdom of Macedon, he created one of the largest empires in the ancient world, stretching from Greece to India.",
+        "associatedWith": "Macedonian Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexander_the_Great",
+        "profession": "Ruler/Military Leader"
+    },
+    {
+        "personName": "Julius Caesar",
+        "lifespan": "100–44 BC",
+        "knownFor": "A Roman general and statesman who played a critical role in the events that led to the demise of the Roman Republic and the rise of the Roman Empire.",
+        "associatedWith": "Roman Republic, Roman Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Julius_Caesar",
+        "profession": "Ruler/Military Leader"
+    },
+    {
+        "personName": "Augustus",
+        "lifespan": "63 BC–14 AD",
+        "knownFor": "The first Roman Emperor, who led Rome's transformation from a republic to an empire, establishing the Pax Romana.",
+        "associatedWith": "Roman Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Augustus",
+        "profession": "Ruler"
+    },
+    {
+        "personName": "Ashoka the Great",
+        "lifespan": "c. 304–232 BC",
+        "knownFor": "An Indian emperor of the Maurya Dynasty who ruled almost all of the Indian subcontinent and is credited with the widespread propagation of Buddhism.",
+        "associatedWith": "Mauryan Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Ashoka",
+        "profession": "Ruler"
+    },
+    {
+        "personName": "Hannibal Barca",
+        "lifespan": "c. 247–183 BC",
+        "knownFor": "Carthaginian general and statesman, considered one of the greatest military commanders in history for his leadership in the Second Punic War.",
+        "associatedWith": "Carthaginian Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Hannibal",
+        "profession": "Military Leader"
+    },
+    {
+        "personName": "Constantine the Great",
+        "lifespan": "c. 272–337 AD",
+        "knownFor": "Roman Emperor who legalized Christianity throughout the empire and founded the city of Constantinople.",
+        "associatedWith": "Roman Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Constantine_the_Great",
+        "profession": "Ruler"
+    },
+    {
+        "personName": "Charlemagne",
+        "lifespan": "c. 747–814 AD",
+        "knownFor": "King of the Franks and founder of the Carolingian Empire, uniting much of Western and Central Europe.",
+        "associatedWith": "Carolingian Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Charlemagne",
+        "profession": "Ruler"
+    },
+    {
+        "personName": "Alfred the Great",
+        "lifespan": "c. 849–899 AD",
+        "knownFor": "King of Wessex who successfully defended his kingdom against the Viking invasion, laying the groundwork for the unification of England.",
+        "associatedWith": "Kingdom of Wessex",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alfred_the_Great",
+        "profession": "Ruler/Military Leader"
+    },
+    {
+        "personName": "Ibn Sina (Avicenna)",
+        "lifespan": "c. 980–1037 AD",
+        "knownFor": "A Persian polymath regarded as one of the most significant physicians, astronomers, and thinkers of the Islamic Golden Age.",
+        "associatedWith": "Samanid Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Avicenna",
+        "profession": "Scientist/Scholar"
+    },
+    {
+        "personName": "Genghis Khan",
+        "lifespan": "c. 1162–1227 AD",
+        "knownFor": "Founder and first Great Khan of the Mongol Empire, which became the largest contiguous empire in history.",
+        "associatedWith": "Mongol Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Genghis_Khan",
+        "profession": "Ruler/Military Leader"
+    },
+    {
+        "personName": "Marco Polo",
+        "lifespan": "c. 1254–1324 AD",
+        "knownFor": "Venetian merchant and explorer who traveled along the Silk Road and whose travels were chronicled in 'The Travels of Marco Polo'.",
+        "associatedWith": "Mongol Empire, Yuan Dynasty",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Marco_Polo",
+        "profession": "Explorer/Merchant"
+    },
+    {
+        "personName": "Ibn Battuta",
+        "lifespan": "1304–1368 AD",
+        "knownFor": "Moroccan explorer and scholar who traveled more than 75,000 miles across the Islamic world and beyond, recording his journeys in 'The Rihla'.",
+        "associatedWith": "Mali Empire, Delhi Sultanate",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Ibn_Battuta",
+        "profession": "Explorer/Scholar"
+    },
+    {
+        "personName": "Leonardo da Vinci",
+        "lifespan": "1452–1519 AD",
+        "knownFor": "A polymath of the Italian Renaissance whose genius spanned invention, painting, sculpting, architecture, science, and more. Famous works include the 'Mona Lisa' and 'The Last Supper'.",
+        "associatedWith": "Italian City-States (Florence, Milan)",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Leonardo_da_Vinci",
+        "profession": "Artist/Scientist"
+    },
+    {
+        "personName": "Queen Elizabeth I",
+        "lifespan": "1533–1603 AD",
+        "knownFor": "Queen of England and Ireland, her reign is known as the Elizabethan era, a period of great artistic and literary flourishing, and English global exploration.",
+        "associatedWith": "Kingdom of England",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Elizabeth_I",
+        "profession": "Ruler"
+    },
+    {
+        "personName": "Galileo Galilei",
+        "lifespan": "1564–1642 AD",
+        "knownFor": "Italian astronomer and physicist who played a major role in the scientific revolution. His improvements to the telescope and support for Copernicanism changed the understanding of the cosmos.",
+        "associatedWith": "Italian City-States",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Galileo_Galilei",
+        "profession": "Scientist"
+    },
+    {
+        "personName": "William Shakespeare",
+        "lifespan": "1564–1616 AD",
+        "knownFor": "English playwright, poet, and actor, widely regarded as the greatest writer in the English language and the world's pre-eminent dramatist.",
+        "associatedWith": "Kingdom of England",
+        "sourceUrl": "https://en.wikipedia.org/wiki/William_Shakespeare",
+        "profession": "Artist/Writer"
+    },
+    {
+        "personName": "Isaac Newton",
+        "lifespan": "1643–1727 AD",
+        "knownFor": "English physicist and mathematician who is widely regarded as one of the most influential scientists of all time. Key work includes 'Principia Mathematica'.",
+        "associatedWith": "Kingdom of England",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Isaac_Newton",
+        "profession": "Scientist"
+    },
+    {
+        "personName": "George Washington",
+        "lifespan": "1732–1799 AD",
+        "knownFor": "First President of the United States, Commander-in-Chief of the Continental Army during the American Revolutionary War.",
+        "associatedWith": "United States of America",
+        "sourceUrl": "https://en.wikipedia.org/wiki/George_Washington",
+        "profession": "Ruler/Military Leader"
+    },
+    {
+        "personName": "Napoleon Bonaparte",
+        "lifespan": "1769–1821 AD",
+        "knownFor": "French military and political leader who rose to prominence during the French Revolution and led several successful campaigns during the French Revolutionary Wars. As Emperor of the French, he dominated European and global affairs for over a decade.",
+        "associatedWith": "First French Empire (Napoleonic)",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Napoleon",
+        "profession": "Ruler/Military Leader"
+    },
+    {
+        "personName": "Queen Victoria",
+        "lifespan": "1819–1901 AD",
+        "knownFor": "Queen of the United Kingdom and Empress of India, her reign of 63 years was a period of great industrial, cultural, political, scientific, and military change.",
+        "associatedWith": "United Kingdom of Great Britain and Ireland",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Queen_Victoria",
+        "profession": "Ruler"
+    },
+    {
+        "personName": "Otto von Bismarck",
+        "lifespan": "1815–1898 AD",
+        "knownFor": "A conservative Prussian statesman who dominated German and European affairs from the 1860s until 1890. He engineered the unification of Germany in 1871.",
+        "associatedWith": "German Empire",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Otto_von_Bismarck",
+        "profession": "Political Figure"
+    },
+    {
+        "personName": "Mahatma Gandhi",
+        "lifespan": "1869–1948 AD",
+        "knownFor": "Indian lawyer, anti-colonial nationalist, and political ethicist who employed nonviolent resistance to lead the successful campaign for India's independence from British Rule.",
+        "associatedWith": "British Raj (India)",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Mahatma_Gandhi",
+        "profession": "Political Figure/Activist"
+    },
+    {
+        "personName": "Mustafa Kemal Atatürk",
+        "lifespan": "1881–1938 AD",
+        "knownFor": "Founder and first president of the Republic of Turkey, credited with the establishment of the modern Turkish state.",
+        "associatedWith": "Republic of Turkey",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Mustafa_Kemal_Atat%C3%BCrk",
+        "profession": "Ruler/Political Figure"
+    },
+    {
+        "personName": "Vladimir Lenin",
+        "lifespan": "1870–1924 AD",
+        "knownFor": "Russian revolutionary and head of government of the Soviet Union from 1917 to 1924. He played a key role in the October Revolution and the establishment of the world's first communist state.",
+        "associatedWith": "Soviet Union (USSR)",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Vladimir_Lenin",
+        "profession": "Ruler/Political Figure"
+    },
+    {
+        "personName": "Adolf Hitler",
+        "lifespan": "1889–1945 AD",
+        "knownFor": "Leader of the Nazi Party and dictator of Nazi Germany from 1933 to 1945. He was a central figure in World War II and the Holocaust.",
+        "associatedWith": "Nazi Germany (Third Reich)",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Adolf_Hitler",
+        "profession": "Ruler/Military Leader"
+    },
+    {
+        "personName": "Winston Churchill",
+        "lifespan": "1874–1965 AD",
+        "knownFor": "British Prime Minister during World War II, known for his wartime leadership and inspiring speeches.",
+        "associatedWith": "United Kingdom",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Winston_Churchill",
+        "profession": "Political Figure"
+    },
+    {
+        "personName": "Franklin D. Roosevelt",
+        "lifespan": "1882–1945 AD",
+        "knownFor": "32nd President of the United States, serving during the Great Depression and World War II. He led the nation through a period of economic and global crisis.",
+        "associatedWith": "United States of America",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Franklin_D._Roosevelt",
+        "profession": "Ruler/Political Figure"
+    },
+    {
+        "personName": "Nelson Mandela",
+        "lifespan": "1918–2013 AD",
+        "knownFor": "South African anti-apartheid revolutionary and first President of South Africa. He was a central figure in the struggle against apartheid and a global icon of peace and reconciliation.",
+        "associatedWith": "Republic of South Africa",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Nelson_Mandela",
+        "profession": "Ruler/Activist"
+    },
+    {
+        "personName": "Albert Einstein",
+        "lifespan": "1879–1955 AD",
+        "knownFor": "German-born theoretical physicist who developed the theory of relativity and is considered one of the most influential scientists of all time.",
+        "associatedWith": "Germany, Switzerland, United States of America",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Albert_Einstein",
+        "profession": "Scientist"
+    },
+    {
+        "personName": "Marie Curie",
+        "lifespan": "1867–1934 AD",
+        "knownFor": "Polish-French physicist and chemist, and the first woman to win a Nobel Prize. Her pioneering research on radioactivity laid the foundation for modern nuclear physics.",
+        "associatedWith": "France",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Marie_Curie",
+        "profession": "Scientist"
+    },
+    {
+        "personName": "Isaac Asimov",
+        "lifespan": "1920–1992 AD",
+        "knownFor": "American writer and biochemist, considered one of the 'Big Three' science fiction writers. He wrote or edited more than 500 books.",
+        "associatedWith": "United States of America",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Isaac_Asimov",
+        "profession": "Writer"
+    }
+]
