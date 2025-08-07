@@ -84,11 +84,57 @@
         
         /* Key Index styles */
         .key-index {
-            padding: 1rem 0;
+            padding: 0.5rem 0; 
             border-bottom: 1px solid #cbd5e1;
             background-color: #f0f4f8;
-            z-index: 99; /* Ensure it's below the header, but above timeline content */
+            z-index: 99;
         }
+        #timelineKey {
+            flex-wrap: nowrap; /* Prevents wrapping */
+            justify-content: flex-start; /* Aligns to the start */
+            gap: 0.75rem;
+            overflow-x: auto; /* Enables horizontal scrolling */
+            -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
+            padding: 0 1rem; /* Add padding to prevent items from touching the edges */
+        }
+        #timelineKey .flex.items-center.gap-2 {
+            font-size: 0.75rem; /* text-xs */
+            flex-shrink: 0; /* Prevents items from shrinking */
+        }
+        #timelineKey .flex.items-center.gap-2 > div {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Search Wrapper styles */
+        .search-wrapper {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #cbd5e1;
+            background-color: #f0f4f8;
+        }
+        .search-wrapper > div {
+            max-width: 80rem;
+            margin-left: auto;
+            margin-right: auto;
+            background-color: white;
+            padding: 0 1rem;
+        }
+        .search-wrapper input {
+            padding: 0.5rem 0.75rem;
+            border-width: 1px;
+            border-radius: 0.375rem;
+            width: 100%;
+            background-color: #f8fafc;
+            color: #475569;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .search-wrapper input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+
 
         /* Main Timeline Content Scroll Wrapper */
         #mainTimelineContentScroll {
@@ -123,7 +169,7 @@
             transform: translateZ(0); /* Force hardware acceleration */
         }
         /* Inner div for axis content to apply max-width, padding, and manage overflow */
-        #sticky-timeline-axis-container > div.max-w-7xl { /* Targeting specifically the max-w-7xl div */
+        #sticky-timeline-axis-container > div.max-w-7xl {
             max-width: 80rem; /* Equivalent to max-w-7xl */
             margin-left: auto;
             margin-right: auto;
@@ -185,7 +231,7 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
-        
+
         /* Tooltip styles */
         .timeline-tooltip {
             position: fixed;
@@ -319,13 +365,15 @@
             color: #334155; /* Darker text for contrast */
             opacity: 0.8; /* Slightly less faded for better visibility */
             pointer-events: none; /* Do not interfere with mouse events on bars */
-            white-space: nowrap;
+            white-space: normal; /* Allow text to wrap after rotation */
             overflow: hidden;
             text-overflow: ellipsis;
             z-index: 2; /* Ensure label is above its own background */
             background-color: rgba(255, 255, 255, 0.7); /* Add a subtle background to the label itself for readability */
             padding: 0.25rem 0.5rem;
             border-radius: 0.25rem;
+            transform-origin: center center; /* IMPORTANT: Set the origin of the rotation to the center */
+            transform: rotate(-90deg); /* CRITICAL: Rotate the text */
         }
     </style>
 </head>
@@ -345,8 +393,14 @@
             <input type="range" id="zoomSlider" min="0.3642" max="10" step="0.1" value="1">
         </div>
 
+        <div class="search-wrapper">
+            <div class="max-w-7xl mx-auto bg-white">
+                <input type="text" id="timelineSearch" placeholder="Search for events by name, type, or region..." class="p-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-blue-500 transition-colors w-full">
+            </div>
+        </div>
+
         <div class="key-index max-w-7xl mx-auto bg-white">
-            <div id="timelineKey" class="flex flex-wrap justify-center gap-4 text-sm text-gray-700">
+            <div id="timelineKey" class="flex flex-wrap justify-center gap-4 text-xs text-gray-700">
                 </div>
         </div>
     </div>
@@ -437,7 +491,7 @@
                 }
                 rawTimelineData = await response.json(); // Assign fetched data
                 renderTimeline(); // Call renderTimeline AFTER data is loaded
-                populateKeyIndex(); // NEW: Populate the key index after rendering
+                populateKeyIndex(); // Populate the key index after rendering
             } catch (error) {
                 console.error("Error fetching timeline data:", error);
                 // Display an error message on the page if data fails to load
@@ -450,7 +504,6 @@
             const keyIndex = document.getElementById('timelineKey');
             keyIndex.innerHTML = '';
             
-            // Get all unique subcategories from the data
             const uniqueSubCategories = [...new Set(rawTimelineData.map(item => item.subCategory))].sort();
             
             uniqueSubCategories.forEach(subCategory => {
@@ -459,8 +512,8 @@
                 const keyItem = document.createElement('div');
                 keyItem.className = 'flex items-center gap-2';
                 keyItem.innerHTML = `
-                    <div style="background-color: ${color}; width: 16px; height: 16px; border-radius: 4px;"></div>
-                    <span>${subCategory}</span>
+                    <div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0;"></div>
+                    <span class="whitespace-nowrap">${subCategory}</span>
                 `;
                 keyIndex.appendChild(keyItem);
             });
@@ -498,11 +551,11 @@
             modalRegion.textContent = item.region || 'N/A';
             modalSourceLink.href = item.sourceUrl || '#';
 
+            llmResponseArea.classList.remove('hidden');
             llmResponseText.textContent = '';
-            llmResponseArea.classList.add('hidden');
             llmLoadingSpinner.classList.add('flex');
             llmLoadingSpinner.classList.remove('hidden');
-            getInsightsBtn.disabled = false;
+            getInsightsBtn.disabled = true;
 
             getInsightsBtn.dataset.eventName = item.eventName;
             getInsightsBtn.dataset.startYear = item.startYear;
@@ -636,14 +689,13 @@
             };
         }
 
-        function renderTimeline() {
+        function renderTimeline(dataToRender = rawTimelineData) {
             const timelineDiv = document.getElementById('timeline');
-            timelineDiv.innerHTML = ''; // Clear existing content
-
-            // Target the *inner* div of the fixed axis container for rendering the axis
+            timelineDiv.innerHTML = '';
+            
             const stickyAxisContainerInner = document.getElementById('sticky-timeline-axis-container').querySelector('div.max-w-7xl');
-            stickyAxisContainerInner.innerHTML = ''; // Clear existing axis
-
+            stickyAxisContainerInner.innerHTML = '';
+            
             const timePeriods = [
                 { name: "Ancient Civilizations", startYear: -5000, endYear: -1000, color: "#e0f2f7" },
                 { name: "Classical Antiquity", startYear: -1000, endYear: 500, color: "#d1e8ef" },
@@ -651,18 +703,16 @@
                 { name: "Early Modern Period", startYear: 1500, endYear: 1800, color: "#b3d8e0" },
                 { name: "Modern Period", startYear: 1800, endYear: 2025, color: "#a4d0d8" }
             ];
-
+        
             const axisDiv = document.createElement('div');
             axisDiv.className = 'timeline-axis';
-            axisDiv.id = 'bottomTimelineAxis'; // ID for the actual axis content
-            axisDiv.style.width = `${yearToPixels(MAX_DISPLAY_YEAR)}px`; // Set its width based on zoom
-            stickyAxisContainerInner.appendChild(axisDiv); // Axis is now in the DOM
-
-            // Update body padding based on axis height after it's in the DOM
+            axisDiv.id = 'bottomTimelineAxis';
+            axisDiv.style.width = `${yearToPixels(MAX_DISPLAY_YEAR)}px`;
+            stickyAxisContainerInner.appendChild(axisDiv);
+        
             const computedAxisHeight = document.getElementById('sticky-timeline-axis-container').offsetHeight;
-            document.body.style.paddingBottom = `${computedAxisHeight + 2}px`; // Added a small buffer
-
-
+            document.body.style.paddingBottom = `${computedAxisHeight + 2}px`;
+        
             const step = 500;
             for (let year = MIN_DISPLAY_YEAR; year <= MAX_DISPLAY_YEAR; year += step) {
                 const label = document.createElement('div');
@@ -671,14 +721,13 @@
                 label.textContent = year < 0 ? Math.abs(year) + ' BC' : year;
                 axisDiv.appendChild(label);
             }
-
+        
             const lanes = [];
-
-            // Deduplicate and consolidate rawTimelineData into consolidatedTimelineData
+        
             const consolidatedTimelineData = [];
             const seenEventNames = new Set();
-
-            rawTimelineData.forEach(item => {
+        
+            dataToRender.forEach(item => {
                 if (!seenEventNames.has(item.eventName)) {
                     consolidatedTimelineData.push({ ...item });
                     seenEventNames.add(item.eventName);
@@ -700,29 +749,27 @@
                     }
                 }
             });
-
-            // Now, sort the consolidated data
+        
             consolidatedTimelineData.sort((a, b) => a.startYear - b.startYear);
-
-            // Populate lanes using the consolidated and sorted data
+        
             consolidatedTimelineData.forEach(item => {
                 const itemActualEndYear = Math.min(item.endYear, MAX_DISPLAY_YEAR);
                 const itemActualStartYear = Math.max(item.startYear, MIN_DISPLAY_YEAR);
-
+        
                 if (itemActualEndYear < MIN_DISPLAY_YEAR || itemActualStartYear > MAX_DISPLAY_YEAR || itemActualEndYear <= itemActualStartYear) {
-                    return; // Skip if event is outside display range or invalid
+                    return;
                 }
-
+        
                 let placed = false;
                 for (let i = 0; i < lanes.length; i++) {
                     const currentLane = lanes[i];
                     let canPlaceInThisLane = true;
-
+        
                     for (let j = 0; j < currentLane.length; j++) {
                         const existingItem = currentLane[j];
                         const existingItemActualEndYear = Math.min(existingItem.endYear, MAX_DISPLAY_YEAR);
                         const existingItemActualStartYear = Math.max(existingItem.startYear, MIN_DISPLAY_YEAR);
-
+        
                         if (hasOverlap(
                             { startYear: itemActualStartYear, endYear: itemActualEndYear },
                             { startYear: existingItemActualStartYear, endYear: existingItemActualEndYear }
@@ -731,74 +778,67 @@
                             break;
                         }
                     }
-
+        
                     if (canPlaceInThisLane) {
                         currentLane.push(item);
                         placed = true;
                         break;
                     }
                 }
-
+        
                 if (!placed) {
                     lanes.push([item]);
                 }
             });
-
-
-            // Render period backgrounds BEFORE lanes and bars
+        
             timePeriods.forEach(period => {
                 const periodDiv = document.createElement('div');
                 periodDiv.className = 'timeline-period-background';
                 periodDiv.style.backgroundColor = period.color;
-
+        
                 const startPositionPeriod = yearToPixels(period.startYear);
                 const endPositionPeriod = yearToPixels(period.endYear);
-
+        
                 periodDiv.style.left = `${startPositionPeriod}px`;
                 periodDiv.style.width = `${endPositionPeriod - startPositionPeriod}px`;
-
+        
                 const periodLabel = document.createElement('div');
                 periodLabel.className = 'timeline-period-label';
                 periodLabel.textContent = period.name;
                 periodDiv.appendChild(periodLabel);
-
+        
                 timelineDiv.appendChild(periodDiv);
             });
-
-            // Render lanes and bars
+        
             lanes.forEach(laneItems => {
                 const laneDiv = document.createElement('div');
                 laneDiv.className = 'timeline-lane';
-                // Set lane width based on the max possible pixel value at current zoom
                 laneDiv.style.width = `${yearToPixels(MAX_DISPLAY_YEAR)}px`;
-
+        
                 laneItems.forEach(item => {
                     const actualEndYear = Math.min(item.endYear, MAX_DISPLAY_YEAR);
                     const actualStartYear = Math.max(item.startYear, MIN_DISPLAY_YEAR);
-
+        
                     if (actualEndYear < MIN_DISPLAY_YEAR || actualStartYear > MAX_DISPLAY_YEAR || actualEndYear <= actualStartYear) {
                         return;
                     }
-
+        
                     const barDiv = document.createElement('div');
                     barDiv.className = 'timeline-bar';
                     barDiv.onclick = () => openModal(item);
-
+        
                     barDiv.addEventListener('mouseover', (event) => showGlobalTooltip(item, event.clientX, event.clientY));
                     barDiv.addEventListener('mouseout', hideGlobalTooltip);
-
-                    // --- NEW: Apply color based on subCategory ---
+        
                     const barColor = subCategoryColors[item.subCategory] || subCategoryColors.default;
                     barDiv.style.backgroundColor = barColor;
-
-                    // Use yearToPixels for bar positioning and width
+        
                     const startPositionBar = yearToPixels(actualStartYear);
                     const endPositionBar = yearToPixels(actualEndYear);
-
+        
                     barDiv.style.left = `${startPositionBar}px`;
                     barDiv.style.width = `${endPositionBar - startPositionBar}px`;
-
-                    // Adjust text visibility based on bar width
+        
                     const barWidth = endPositionBar - startPositionBar;
                     if (barWidth > 120) {
                         barDiv.textContent = item.eventName;
@@ -807,82 +847,102 @@
                     } else {
                         barDiv.textContent = '';
                     }
-
+        
                     laneDiv.appendChild(barDiv);
                 });
                 timelineDiv.appendChild(laneDiv);
             });
-
-            // Adjust the height of period backgrounds after all lanes are rendered
+        
             const actualTimelineHeight = timelineDiv.scrollHeight;
             document.querySelectorAll('.timeline-period-background').forEach(periodDiv => {
                 periodDiv.style.height = `${actualTimelineHeight}px`;
             });
-
-            // --- Re-attach/Initialize Scroll Synchronization ---
+        
             const mainTimelineScrollWrapper = document.getElementById('mainTimelineContentScroll');
             const bottomAxisContent = document.getElementById('bottomTimelineAxis');
-
-            // If a listener was previously attached, remove it to prevent duplicates
-            if (mainTimelineScrollWrapper.dataset.currentScrollHandler) {
-                mainTimelineScrollWrapper.removeEventListener('scroll', window[mainTimelineScrollWrapper.dataset.currentScrollHandler]);
-                delete window[mainTimelineScrollWrapper.dataset.currentScrollHandler]; // Clean up global reference
-                delete mainTimelineScrollWrapper.dataset.currentScrollHandler;
+        
+            if (bottomAxisContent && !mainTimelineScrollWrapper.dataset.scrollListenerAttached) {
+                const debouncedScrollHandler = debounce(() => {
+                    if (bottomAxisContent) {
+                        bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
+                    }
+                }, 5);
+        
+                const handlerName = `scrollHandler_${Date.now()}`;
+                window[handlerName] = debouncedScrollHandler;
+                mainTimelineScrollWrapper.addEventListener('scroll', window[handlerName]);
+                mainTimelineScrollWrapper.dataset.currentScrollHandler = handlerName;
             }
-
-            // Define the debounced handler
-            const debouncedScrollHandler = debounce(() => {
-                if (bottomAxisContent) {
-                    bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
-                }
-            }, 5); // Debounce to smooth updates
-
-            // Give the handler a unique name on the window object and attach it
-            const handlerName = `scrollHandler_${Date.now()}`;
-            window[handlerName] = debouncedScrollHandler; // Store reference to be able to remove it
-            mainTimelineScrollWrapper.addEventListener('scroll', window[handlerName]);
-            mainTimelineScrollWrapper.dataset.currentScrollHandler = handlerName; // Store name for removal
-
-            // Ensure the initial state is synced too
+        
             if (bottomAxisContent) {
                  bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
             }
         }
 
+        // NEW: Filter function to handle search
+        function filterTimeline(searchTerm) {
+            let filteredData = rawTimelineData.filter(item => {
+                const searchString = searchTerm.toLowerCase();
+                return (
+                    (item.eventName && item.eventName.toLowerCase().includes(searchString)) ||
+                    (item.subCategory && item.subCategory.toLowerCase().includes(searchString)) ||
+                    (item.description && item.description.toLowerCase().includes(searchString)) ||
+                    (item.region && item.region.toLowerCase().includes(searchString))
+                );
+            });
+            renderTimeline(filteredData);
+        }
+
         // Event listener for the zoom slider
         document.getElementById("zoomSlider").addEventListener("input", (e) => {
             const mainTimelineScrollWrapper = document.getElementById('mainTimelineContentScroll');
-
-            // 1. Capture current scroll state BEFORE zoomFactor changes
             const oldScrollLeft = mainTimelineScrollWrapper.scrollLeft;
-            const oldClientWidth = mainTimelineScrollWrapper.clientWidth; // Visible width of the scrollable area
-
-            // Calculate the pixel position of the current center point on the *unzoomed* timeline
+            const oldClientWidth = mainTimelineScrollWrapper.clientWidth;
             const currentCenterPixelRelativeOldZoom = oldScrollLeft + (oldClientWidth / 2);
-
-            // Convert this pixel position back to a "year" on the unzoomed scale
-            const oldZoom = zoomFactor; // Store the zoom factor *before* updating
+            const oldZoom = zoomFactor;
             const currentCenterYear = (currentCenterPixelRelativeOldZoom / (BASE_PIXELS_PER_YEAR * oldZoom)) + MIN_DISPLAY_YEAR;
-
-
-            // 2. Update the zoom factor
             zoomFactor = parseFloat(e.target.value);
+            
+            const searchTerm = document.getElementById('timelineSearch').value;
+            if (searchTerm.length > 0) {
+                filterTimeline(searchTerm);
+            } else {
+                renderTimeline();
+            }
 
-            // 3. Re-render the timeline with the new zoom factor
-            renderTimeline();
-
-            // 4. Calculate new scroll position AFTER render has updated element widths
             const newCenterPixelRelativeNewZoom = yearToPixels(currentCenterYear);
-
-            // Calculate the new scrollLeft needed to bring this newCenterPixel to the center of the viewport
             const newScrollLeft = newCenterPixelRelativeNewZoom - (mainTimelineScrollWrapper.clientWidth / 2);
-
-            // 5. Apply the new scrollLeft
             requestAnimationFrame(() => {
                 mainTimelineScrollWrapper.scrollLeft = newScrollLeft;
             });
         });
 
+        // NEW: Event listener for the search bar
+        document.getElementById("timelineSearch").addEventListener("input", (e) => {
+            const searchTerm = e.target.value;
+            filterTimeline(searchTerm);
+        });
+
+        // NEW: Function to populate the key index
+        function populateKeyIndex() {
+            const keyIndex = document.getElementById('timelineKey');
+            keyIndex.innerHTML = '';
+            
+            const uniqueSubCategories = [...new Set(rawTimelineData.map(item => item.subCategory))].sort();
+            
+            uniqueSubCategories.forEach(subCategory => {
+                const color = subCategoryColors[subCategory] || subCategoryColors.default;
+                
+                const keyItem = document.createElement('div');
+                keyItem.className = 'flex items-center gap-2';
+                keyItem.innerHTML = `
+                    <div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0;"></div>
+                    <span class="whitespace-nowrap">${subCategory}</span>
+                `;
+                keyIndex.appendChild(keyItem);
+            });
+        }
+        
         // Initial fetch and render on window load
         window.onload = fetchTimelineData;
     </script>
