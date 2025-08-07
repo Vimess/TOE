@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline of Everything (5000 BC - Present)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Base styles for HTML and Body */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* Prevent horizontal scroll on the main page */
+            overflow-y: auto;   /* Allow vertical scroll on the main page */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            color: #334155; /* Darker text */
+            padding-top: 0; /* Ensure no top padding from Tailwind's p-6 if it was on body */
+            padding-left: 1.5rem;  /* Overall left page padding */
+            padding-right: 1.5rem; /* Overall right page padding */
+            padding-bottom: 50px; /* IMPORTANT: Space for the fixed bottom axis. Adjust if its height changes. */
+        }
+
+        /* Wrapper for header and zoom controls, fixed to top */
+        .header-and-controls-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 100; /* Ensure this wrapper stays on top */
+            background-color: #f0f4f8; /* Match body background */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Optional: Shadow for the entire sticky block */
+        }
+        /* Apply max-width and auto margins to direct children inside the sticky wrapper */
+        .header-and-controls-wrapper > div {
+            max-width: 80rem; /* Equivalent to max-w-7xl */
+            margin-left: auto;
+            margin-right: auto;
+            background-color: white; /* Ensure children have white background if wrapper is transparent */
+        }
+
+        /* Main Header styles (compacted) */
+        .main-header {
+            padding-top: 0.75rem;    /* Reduced padding */
+            padding-bottom: 0.75rem; /* Reduced padding */
+            border-radius: 0.5rem; /* Keep rounded corners */
+            box-shadow: none; /* Shadow handled by parent wrapper */
+        }
+        .main-header h1, .main-header p {
+            margin-bottom: 0; /* Remove internal margins for compactness */
+        }
+
+        /* Zoom Control Wrapper styles */
+        .zoom-control-wrapper {
+            padding: 0.75rem 0;
+            text-align: center;
+            border-bottom: 1px solid #cbd5e1; /* Separator */
+            background-color: #f0f4f8; /* Ensure consistent background */
+        }
+
+        /* Main Timeline Content Scroll Wrapper */
+        #mainTimelineContentScroll {
+            overflow-x: auto; /* This container manages horizontal scrolling */
+            overflow-y: hidden; /* Prevent vertical scrollbar within this specific div */
+            width: 100%; /* Spans full width of its parent (body padding applied) */
+            padding-left: 0;
+            padding-right: 0;
+        }
+        /* Inner div for timeline content to apply max-width and centering */
+        #timeline {
+            position: relative;
+            padding-bottom: 2rem;
+            margin-top: 1rem; /* Space below top sticky header */
+            width: fit-content; /* Allow content to dictate width */
+            min-width: 100%; /* Ensure it takes at least 100% of its parent's width */
+            background-color: white; /* Match content background */
+            max-width: 80rem; /* Equivalent to max-w-7xl, for content alignment */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Fixed Bottom Timeline Axis Container */
+        #sticky-timeline-axis-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 90;
+            background-color: #f0f4f8;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            transform: translateZ(0); /* Force hardware acceleration */
+        }
+        /* NEW: Inner "viewport" div for axis content to apply max-width, padding, and manage overflow */
+        #sticky-timeline-axis-container > div.max-w-7xl { /* Targeting specifically the max-w-7xl div */
+            max-width: 80rem; /* Equivalent to max-w-7xl */
+            margin-left: auto;
+            margin-right: auto;
+            background-color: white;
+            padding: 0.75rem 0; /* Padding inside the centered content */
+            border-top: 1px solid #cbd5e1; /* Border at the top of the axis content */
+            overflow: hidden; /* CRITICAL: This clips the horizontally moving axis content */
+        }
+
+
+        /* The actual timeline axis content (will be transformed by JS) */
+        .timeline-axis {
+            display: flex;
+            align-items: center; /* Vertically center content */
+            width: fit-content; /* True width of axis content, potentially very wide */
+            min-width: 100%; /* Ensures it's at least as wide as its visible container (the .axis-viewport-inner) */
+            transition: transform 0.05s linear; /* Smooths out the JS scroll sync */
+        }
+        .timeline-axis-label {
+            position: absolute;
+            top: 50%; /* Position the top edge at the vertical middle of the parent */
+            transform: translate(-50%, -50%); /* Center based on label's own height */
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        /* Timeline Lane and Bar styles */
+        .timeline-lane {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            min-height: 2.5rem;
+            position: relative;
+        }
+        .timeline-bar-container {
+            flex-grow: 1;
+            height: 100%;
+            position: relative;
+        }
+        .timeline-bar {
+            position: absolute;
+            height: 20px;
+            background-color: #3b82f6;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            padding: 0 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer;
+            z-index: 5;
+        }
+        .timeline-bar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Tooltip styles */
+        .timeline-tooltip {
+            position: fixed;
+            background-color: #1e293b;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            min-width: 250px;
+            max-width: 350px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .timeline-tooltip.visible {
+            opacity: 1;
+        }
+        .tooltip-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #1e293b;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .timeline-bar {
+                height: 18px;
+                font-size: 0.65rem;
+            }
+            .timeline-tooltip {
+                min-width: 200px;
+                max-width: 90%;
+            }
+        }
+
+        /* Modal specific styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+        .modal-close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .modal-close-button:hover {
+            color: #1e293b;
+        }
+        .llm-response-area {
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #475569;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Styles for period background blocks */
+        .timeline-period-background {
+            position: absolute;
+            top: 0;
+            height: 100%; /* Will be set dynamically to fill the timeline height */
+            opacity: 0.5; /* Increased opacity for visibility */
+            z-index: 1; /* Ensure it's behind bars and axis */
+            display: flex; /* Make it a flex container */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+        }
+        .timeline-period-label {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #334155; /* Darker text for contrast */
+            opacity: 0.8; /* Slightly less faded for better visibility */
+            pointer-events: none; /* Do not interfere with mouse events on bars */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            z-index: 2; /* Ensure label is above its own background */
+            background-color: rgba(255, 255, 255, 0.7); /* Add a subtle background to the label itself for readability */
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="">
+    <div class="header-and-controls-wrapper">
+        <div class="max-w-7xl mx-auto bg-white p-8 rounded-lg shadow-xl main-header">
+            <h1 class="text-4xl font-extrabold text-center text-gray-800">
+                Timeline of Everything
+            </h1>
+            <p class="text-lg text-center text-gray-600">
+                From Ancient Civilizations to the Present Day (5000 BC - Present)
+            </p>
+        </div>
+
+        <div class="zoom-control-wrapper max-w-7xl mx-auto bg-white">
+            <label for="zoomSlider" class="mr-2 text-sm text-gray-700">Zoom:</label>
+            <input type="range" id="zoomSlider" min="0.3642" max="10" step="0.1" value="1">
+        </div>
+    </div>
+
+    <div id="mainTimelineContentScroll" class="timeline-horizontal-scroll-wrapper max-w-7xl mx-auto">
+        <div id="timeline" class="timeline-container w-full bg-white pt-4">
+            </div>
+    </div>
+
+    <div id="sticky-timeline-axis-container" class="py-4 border-t border-gray-300">
+        <div class="max-w-7xl mx-auto bg-white axis-viewport-inner">
+            </div>
+    </div>
+
+    <div id="timelineModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" onclick="closeModal()">&times;</button>
+            <h2 id="modalTitle" class="text-3xl font-bold mb-4 text-gray-800"></h2>
+            <p id="modalYears" class="text-lg text-gray-600 mb-4"></p>
+            <p id="modalDescription" class="text-base text-gray-700 mb-2"></p>
+            <p class="text-sm text-gray-500 mb-2"><strong>Key Figures:</strong> <span id="modalKeyFigures"></span></p>
+            <p class="text-sm text-gray-500 mb-4"><strong>Region:</strong> <span id="modalRegion"></span></p>
+            <a id="modalSourceLink" href="#" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-sm block mb-6">Learn more on Wikipedia</a>
+
+            <button id="getInsightsBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                ✨ Get Deeper Insights
+            </button>
+
+            <div id="llmResponseArea" class="llm-response-area hidden">
+                <p id="llmResponseText" class="text-gray-700"></p>
+                <div id="llmLoadingSpinner" class="hidden loading-spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="globalTooltip" class="timeline-tooltip">
+        <h3 class="font-bold text-lg mb-1" id="globalTooltipTitle"></h3>
+        <p id="globalTooltipYears" class="text-sm mb-2"></p>
+        <p id="globalTooltipDescription" class="text-xs mb-2"></p>
+        <p class="text-xs text-gray-400"><strong>Key Figures:</strong> <span id="globalTooltipKeyFigures"></span></p>
+        <p class="text-xs text-gray-400"><strong>Region:</strong> <span id="globalTooltipRegion"></span></p>
+        <div class="tooltip-arrow"></div>
+    </div>
+
+    <script>
+        // Declare rawTimelineData globally so it can be assigned after fetch
+        let rawTimelineData = [];
+        let zoomFactor = 1; // Global zoom factor
+
+        // Constants for timeline display
+        const MIN_DISPLAY_YEAR = -5000;
+        const MAX_DISPLAY_YEAR = 2025;
+        const BASE_PIXELS_PER_YEAR = 0.5; // This determines the base unzoomed width
+
+        // Function to convert year to pixel position, incorporating zoom
+        function yearToPixels(year) {
+            return (year - MIN_DISPLAY_YEAR) * BASE_PIXELS_PER_YEAR * zoomFactor;
+        }
+
+        // Function to fetch the JSON data
+        async function fetchTimelineData() {
+            try {
+                const response = await fetch('./timelineData.json'); // Path to your JSON file
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                rawTimelineData = await response.json(); // Assign fetched data
+                renderTimeline(); // Call renderTimeline AFTER data is loaded
+            } catch (error) {
+                console.error("Error fetching timeline data:", error);
+                // Display an error message on the page if data fails to load
+                document.getElementById('timeline').innerHTML = '<p class="text-center text-red-500">Failed to load timeline data. Please check the console for errors.</p>';
+            }
+        }
+
+        // Modal elements
+        const timelineModal = document.getElementById('timelineModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalYears = document.getElementById('modalYears');
+        const modalDescription = document.getElementById('modalDescription');
+        const modalKeyFigures = document.getElementById('modalKeyFigures');
+        const modalRegion = document.getElementById('modalRegion');
+        const modalSourceLink = document.getElementById('modalSourceLink');
+        const getInsightsBtn = document.getElementById('getInsightsBtn');
+        const llmResponseArea = document.getElementById('llmResponseArea');
+        const llmResponseText = document.getElementById('llmResponseText');
+        const llmLoadingSpinner = document.getElementById('llmLoadingSpinner');
+
+        // Global tooltip elements
+        const globalTooltip = document.getElementById('globalTooltip');
+        const globalTooltipTitle = document.getElementById('globalTooltipTitle');
+        const globalTooltipYears = document.getElementById('globalTooltipYears');
+        const globalTooltipDescription = document.getElementById('globalTooltipDescription');
+        const globalTooltipKeyFigures = document.getElementById('globalTooltipKeyFigures');
+        const globalTooltipRegion = document.getElementById('globalTooltipRegion');
+        const globalTooltipArrow = globalTooltip.querySelector('.tooltip-arrow');
+
+        // Function to open the modal
+        function openModal(item) {
+            modalTitle.textContent = item.eventName;
+            modalYears.textContent = `${item.startYear < 0 ? Math.abs(item.startYear) + ' BC' : item.startYear} - ${item.endYear === 2025 ? 'Present' : (item.endYear < 0 ? Math.abs(item.endYear) + ' BC' : item.endYear)}`;
+            modalDescription.textContent = item.description;
+            modalKeyFigures.textContent = item.keyFigures || 'N/A';
+            modalRegion.textContent = item.region || 'N/A';
+            modalSourceLink.href = item.sourceUrl || '#';
+
+            llmResponseText.textContent = '';
+            llmResponseArea.classList.add('hidden');
+            llmLoadingSpinner.classList.add('hidden');
+            getInsightsBtn.disabled = false;
+
+            getInsightsBtn.dataset.eventName = item.eventName;
+            getInsightsBtn.dataset.startYear = item.startYear;
+            getInsightsBtn.dataset.endYear = item.endYear;
+            getInsightsBtn.dataset.description = item.description;
+
+            timelineModal.classList.add('open');
+            hideGlobalTooltip();
+        }
+
+        // Function to close the modal
+        function closeModal() {
+            timelineModal.classList.remove('open');
+        }
+
+        // Function to show global tooltip
+        function showGlobalTooltip(item, mouseX, mouseY) {
+            globalTooltipTitle.textContent = item.eventName;
+            globalTooltipYears.textContent = `${item.startYear < 0 ? Math.abs(item.startYear) + ' BC' : item.startYear} - ${item.endYear === 2025 ? 'Present' : (item.endYear < 0 ? Math.abs(item.endYear) + ' BC' : item.endYear)}`;
+            globalTooltipDescription.textContent = item.description;
+            globalTooltipKeyFigures.textContent = item.keyFigures || 'N/A';
+            globalTooltipRegion.textContent = item.region || 'N/A';
+
+            const offsetX = 15;
+            const offsetY = 20;
+
+            let tooltipLeft = mouseX + offsetX;
+            let tooltipTop = mouseY - globalTooltip.offsetHeight - offsetY;
+
+            // Adjust if it goes off-screen to the right
+            if (tooltipLeft + globalTooltip.offsetWidth > window.innerWidth - 10) {
+                tooltipLeft = window.innerWidth - globalTooltip.offsetWidth - 10;
+            }
+            // Adjust if it goes off-screen to the left
+            if (tooltipLeft < 10) {
+                tooltipLeft = 10;
+            }
+
+            // Adjust if it goes off-screen to the top (move below cursor instead)
+            const headerHeight = document.querySelector('.main-header').offsetHeight;
+            if (mouseY - globalTooltip.offsetHeight - offsetY < headerHeight + 10) {
+                tooltipTop = mouseY + offsetY;
+                globalTooltipArrow.style.borderTop = 'none';
+                globalTooltipArrow.style.borderBottom = '8px solid #1e293b';
+                globalTooltipArrow.style.top = '-8px';
+                globalTooltipArrow.style.bottom = 'auto';
+            } else {
+                globalTooltipArrow.style.borderTop = '8px solid #1e293b';
+                globalTooltipArrow.style.borderBottom = 'none';
+                globalTooltipArrow.style.top = 'auto';
+                globalTooltipArrow.style.bottom = '-8px';
+            }
+
+            globalTooltip.style.left = `${tooltipLeft}px`;
+            globalTooltip.style.top = `${tooltipTop}px`;
+            globalTooltip.classList.add('visible');
+        }
+
+        // Function to hide global tooltip
+        function hideGlobalTooltip() {
+            document.getElementById("globalTooltip").classList.remove("visible");
+        }
+
+        // Event listener for the "Get Deeper Insights" button
+        getInsightsBtn.addEventListener('click', async () => {
+            const eventName = getInsightsBtn.dataset.eventName;
+            const startYear = getInsightsBtn.dataset.startYear;
+            const endYear = getInsightsBtn.dataset.endYear;
+            const description = getInsightsBtn.dataset.description;
+
+            llmResponseArea.classList.remove('hidden');
+            llmResponseText.textContent = '';
+            llmLoadingSpinner.classList.remove('hidden');
+            getInsightsBtn.disabled = false;
+
+            const prompt = `Provide a more detailed and interesting summary of the historical entity: "${eventName}" (active from ${startYear < 0 ? Math.abs(startYear) + ' BC' : startYear} to ${endYear === '2025' ? 'Present' : (endYear < 0 ? Math.abs(endYear) + ' BC' : endYear)}). The current brief description is: "${description}". Focus on its key achievements, challenges, and lasting legacy in about 150-200 words.`;
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = { contents: chatHistory };
+            // IMPORTANT: Replace YOUR_GEMINI_API_KEY with your actual API key
+            const apiKey = "YOUR_GEMINI_API_KEY";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error.message}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    llmResponseText.textContent = text;
+                } else {
+                    llmResponseText.textContent = "Could not generate insights. Unexpected API response structure.";
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                llmResponseText.textContent = `Failed to get insights: ${error.message}. Please try again.`;
+            } finally {
+                llmLoadingSpinner.classList.add('hidden');
+                getInsightsBtn.disabled = false;
+            }
+        });
+
+        function hasOverlap(item1, item2) {
+            return item1.startYear < item2.endYear && item2.startYear < item1.endYear;
+        }
+
+        // Debounce utility function
+        function debounce(func, delay) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        function renderTimeline() {
+            const timelineDiv = document.getElementById('timeline');
+            timelineDiv.innerHTML = ''; // Clear existing content
+
+            // Target the *inner* div of the fixed axis container for rendering the axis
+            const stickyAxisContainerInner = document.getElementById('sticky-timeline-axis-container').querySelector('.axis-viewport-inner');
+            stickyAxisContainerInner.innerHTML = ''; // Clear existing axis
+
+            const timePeriods = [
+                { name: "Ancient Civilizations", startYear: -5000, endYear: -1000, color: "#e0f2f7" },
+                { name: "Classical Antiquity", startYear: -1000, endYear: 500, color: "#d1e8ef" },
+                { name: "Middle Ages", startYear: 500, endYear: 1500, color: "#c2e0e8" },
+                { name: "Early Modern Period", startYear: 1500, endYear: 1800, color: "#b3d8e0" },
+                { name: "Modern Period", startYear: 1800, endYear: 2025, color: "#a4d0d8" }
+            ];
+
+            const axisDiv = document.createElement('div');
+            axisDiv.className = 'timeline-axis';
+            axisDiv.id = 'bottomTimelineAxis'; // ID for the actual axis content
+            axisDiv.style.width = `${yearToPixels(MAX_DISPLAY_YEAR)}px`; // Set its width based on zoom
+            stickyAxisContainerInner.appendChild(axisDiv); // Axis is now in the DOM
+
+            // Update body padding based on axis height after it's in the DOM
+            const computedAxisHeight = document.getElementById('sticky-timeline-axis-container').offsetHeight;
+            document.body.style.paddingBottom = `${computedAxisHeight + 2}px`; // Added a small buffer
+
+
+            const step = 500;
+            for (let year = MIN_DISPLAY_YEAR; year <= MAX_DISPLAY_YEAR; year += step) {
+                const label = document.createElement('div');
+                label.className = 'timeline-axis-label';
+                label.style.left = `${yearToPixels(year)}px`;
+                label.textContent = year < 0 ? Math.abs(year) + ' BC' : year;
+                axisDiv.appendChild(label);
+            }
+
+            const lanes = [];
+
+            // Deduplicate and consolidate rawTimelineData into consolidatedTimelineData
+            const consolidatedTimelineData = [];
+            const seenEventNames = new Set();
+
+            rawTimelineData.forEach(item => {
+                if (!seenEventNames.has(item.eventName)) {
+                    consolidatedTimelineData.push({ ...item });
+                    seenEventNames.add(item.eventName);
+                } else {
+                    const existingItem = consolidatedTimelineData.find(
+                        (existing) => existing.eventName === item.eventName
+                    );
+                    if (existingItem) {
+                        existingItem.startYear = Math.min(existingItem.startYear, item.startYear);
+                        existingItem.endYear = Math.max(existingItem.endYear, item.endYear);
+                        if (item.description && !existingItem.description.includes(item.description)) {
+                            existingItem.description += ` ${item.description}`;
+                        }
+                        if (existingItem.keyFigures && item.keyFigures && !existingItem.keyFigures.includes(item.keyFigures)) {
+                             existingItem.keyFigures += `, ${item.keyFigures}`;
+                        } else if (!existingItem.keyFigures && item.keyFigures) {
+                            existingItem.keyFigures = item.keyFigures;
+                        }
+                    }
+                }
+            });
+
+            // Now, sort the consolidated data
+            consolidatedTimelineData.sort((a, b) => a.startYear - b.startYear);
+
+            // Populate lanes using the consolidated and sorted data
+            consolidatedTimelineData.forEach(item => {
+                const itemActualEndYear = Math.min(item.endYear, MAX_DISPLAY_YEAR);
+                const itemActualStartYear = Math.max(item.startYear, MIN_DISPLAY_YEAR);
+
+                if (itemActualEndYear < MIN_DISPLAY_YEAR || itemActualStartYear > MAX_DISPLAY_YEAR || itemActualEndYear <= itemActualStartYear) {
+                    return; // Skip if event is outside display range or invalid
+                }
+
+                let placed = false;
+                for (let i = 0; i < lanes.length; i++) {
+                    const currentLane = lanes[i];
+                    let canPlaceInThisLane = true;
+
+                    for (let j = 0; j < currentLane.length; j++) {
+                        const existingItem = currentLane[j];
+                        const existingItemActualEndYear = Math.min(existingItem.endYear, MAX_DISPLAY_YEAR);
+                        const existingItemActualStartYear = Math.max(existingItem.startYear, MIN_DISPLAY_YEAR);
+
+                        if (hasOverlap(
+                            { startYear: itemActualStartYear, endYear: itemActualEndYear },
+                            { startYear: existingItemActualStartYear, endYear: existingItemActualEndYear }
+                        )) {
+                            canPlaceInThisLane = false;
+                            break;
+                        }
+                    }
+
+                    if (canPlaceInThisLane) {
+                        currentLane.push(item);
+                        placed = true;
+                        break;
+                    }
+                }
+
+                if (!placed) {
+                    lanes.push([item]);
+                }
+            });
+
+
+            // Render period backgrounds BEFORE lanes and bars
+            timePeriods.forEach(period => {
+                const periodDiv = document.createElement('div');
+                periodDiv.className = 'timeline-period-background';
+                periodDiv.style.backgroundColor = period.color;
+
+                const startPositionPeriod = yearToPixels(period.startYear);
+                const endPositionPeriod = yearToPixels(period.endYear);
+
+                periodDiv.style.left = `${startPositionPeriod}px`;
+                periodDiv.style.width = `${endPositionPeriod - startPositionPeriod}px`;
+
+                const periodLabel = document.createElement('div');
+                periodLabel.className = 'timeline-period-label';
+                periodLabel.textContent = period.name;
+                periodDiv.appendChild(periodLabel);
+
+                timelineDiv.appendChild(periodDiv);
+            });
+
+            // Render lanes and bars
+            lanes.forEach(laneItems => {
+                const laneDiv = document.createElement('div');
+                laneDiv.className = 'timeline-lane';
+                // Set lane width based on the max possible pixel value at current zoom
+                laneDiv.style.width = `${yearToPixels(MAX_DISPLAY_YEAR)}px`;
+
+                laneItems.forEach(item => {
+                    const actualEndYear = Math.min(item.endYear, MAX_DISPLAY_YEAR);
+                    const actualStartYear = Math.max(item.startYear, MIN_DISPLAY_YEAR);
+
+                    if (actualEndYear < MIN_DISPLAY_YEAR || actualStartYear > MAX_DISPLAY_YEAR || actualEndYear <= actualStartYear) {
+                        return;
+                    }
+
+                    const barDiv = document.createElement('div');
+                    barDiv.className = 'timeline-bar';
+                    barDiv.onclick = () => openModal(item);
+
+                    barDiv.addEventListener('mouseover', (event) => showGlobalTooltip(item, event.clientX, event.clientY));
+                    barDiv.addEventListener('mouseout', hideGlobalTooltip);
+
+                    // Use yearToPixels for bar positioning and width
+                    const startPositionBar = yearToPixels(actualStartYear);
+                    const endPositionBar = yearToPixels(actualEndYear);
+
+                    barDiv.style.left = `${startPositionBar}px`;
+                    barDiv.style.width = `${endPositionBar - startPositionBar}px`;
+
+                    // Adjust text visibility based on bar width
+                    const barWidth = endPositionBar - startPositionBar;
+                    if (barWidth > 120) {
+                        barDiv.textContent = item.eventName;
+                    } else if (barWidth > 40) {
+                        barDiv.textContent = `${item.startYear < 0 ? Math.abs(item.startYear) + ' BC' : item.startYear}-${item.endYear === 2025 ? 'Present' : (item.endYear < 0 ? Math.abs(item.endYear) + ' BC' : item.endYear)}`;
+                    } else {
+                        barDiv.textContent = '';
+                    }
+
+                    laneDiv.appendChild(barDiv);
+                });
+                timelineDiv.appendChild(laneDiv);
+            });
+
+            // Adjust the height of period backgrounds after all lanes are rendered
+            const actualTimelineHeight = timelineDiv.scrollHeight;
+            document.querySelectorAll('.timeline-period-background').forEach(periodDiv => {
+                periodDiv.style.height = `${actualTimelineHeight}px`;
+            });
+
+            // --- Re-attach/Initialize Scroll Synchronization ---
+            const mainTimelineScrollWrapper = document.getElementById('mainTimelineContentScroll');
+            const bottomAxisContent = document.getElementById('bottomTimelineAxis'); // Now correctly gets the NEWLY created element
+
+            // If a listener was previously attached, remove it to prevent duplicates
+            if (mainTimelineScrollWrapper.dataset.currentScrollHandler) {
+                mainTimelineScrollWrapper.removeEventListener('scroll', window[mainTimelineScrollWrapper.dataset.currentScrollHandler]);
+                delete window[mainTimelineScrollWrapper.dataset.currentScrollHandler]; // Clean up global reference
+                delete mainTimelineScrollWrapper.dataset.currentScrollHandler;
+            }
+
+            // Define the debounced handler
+            const debouncedScrollHandler = debounce(() => {
+                if (bottomAxisContent) { // This bottomAxisContent is guaranteed to be the new, correct element
+                    bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
+                }
+            }, 5); // Debounce to smooth updates
+
+            // Give the handler a unique name on the window object and attach it
+            const handlerName = `scrollHandler_${Date.now()}`;
+            window[handlerName] = debouncedScrollHandler; // Store reference to be able to remove it
+            mainTimelineScrollWrapper.addEventListener('scroll', window[handlerName]);
+            mainTimelineScrollWrapper.dataset.currentScrollHandler = handlerName; // Store name for removal
+
+            // Ensure the initial state is synced too, right after rendering
+            if (bottomAxisContent) {
+                 bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
+            }
+        }
+
+        // Event listener for the zoom slider
+        document.getElementById("zoomSlider").addEventListener("input", (e) => {
+            const mainTimelineScrollWrapper = document.getElementById('mainTimelineContentScroll');
+
+            // 1. Capture current scroll state BEFORE zoomFactor changes
+            const oldScrollLeft = mainTimelineScrollWrapper.scrollLeft;
+            const oldClientWidth = mainTimelineScrollWrapper.clientWidth; // Visible width of the scrollable area
+
+            // Calculate the pixel position of the current center point on the *unzoomed* timeline
+            // This is the relative pixel position from the start of the current scroll range
+            const currentCenterPixelRelativeOldZoom = oldScrollLeft + (oldClientWidth / 2);
+
+            // Convert this pixel position back to a "year" on the unzoomed scale
+            const oldZoom = zoomFactor; // Store the zoom factor *before* updating
+            const currentCenterYear = (currentCenterPixelRelativeOldZoom / (BASE_PIXELS_PER_YEAR * oldZoom)) + MIN_DISPLAY_YEAR;
+
+
+            // 2. Update the zoom factor
+            zoomFactor = parseFloat(e.target.value);
+
+            // 3. Re-render the timeline with the new zoom factor
+            renderTimeline();
+
+            // 4. Calculate new scroll position AFTER render has updated element widths
+            // Now calculate the new pixel position of that same 'currentCenterYear' with the NEW zoom
+            const newCenterPixelRelativeNewZoom = yearToPixels(currentCenterYear); // yearToPixels now uses the new zoomFactor
+
+            // Calculate the new scrollLeft needed to bring this newCenterPixel to the center of the viewport
+            const newScrollLeft = newCenterPixelRelativeNewZoom - (mainTimelineScrollWrapper.clientWidth / 2);
+
+            // 5. Apply the new scrollLeft
+            // Use requestAnimationFrame for smoother scrolling if it causes a jump
+            requestAnimationFrame(() => {
+                mainTimelineScrollWrapper.scrollLeft = newScrollLeft;
+            });
+        });
+
+        // Initial fetch and render on window load
+        window.onload = fetchTimelineData;
+    </script>
+</body>
+</html>
