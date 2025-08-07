@@ -22,7 +22,7 @@
     <meta property="og:image" content="https://timelineofeverything.vercel.app/social-preview.jpg.png">
     
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://timelineofeverything.vercel.app">
+    <meta property="twitter:url" content="https://timelineofeverything.app">
     <meta property="twitter:title" content="The Timeline of Everything">
     <meta property="twitter:description" content="A visual timeline of all known countries and civilizations from 5000 BC to today.">
     <meta property="twitter:image" content="https://timelineofeverything.vercel.app/social-preview.jpg.png">
@@ -232,6 +232,31 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
+        /* NEW: Styles for person icons */
+        .person-icon {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: #1a202c; /* A dark color for contrast */
+            border-radius: 50%; /* Makes it a circle */
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .person-icon:hover {
+            transform: translateY(-50%) scale(1.3);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+        }
+
         /* Tooltip styles */
         .timeline-tooltip {
             position: fixed;
@@ -353,7 +378,7 @@
             position: absolute;
             top: 0;
             height: 100%; /* Will be set dynamically to fill the timeline height */
-            opacity: 0.5; /* Increased opacity for visibility */
+            opacity: 1; 
             z-index: 1; /* Ensure it's behind bars and axis */
             display: flex; /* Make it a flex container */
             justify-content: center; /* Center horizontally */
@@ -389,8 +414,9 @@
         </div>
 
         <div class="zoom-control-wrapper max-w-7xl mx-auto bg-white">
-            <label for="zoomSlider" class="mr-2 text-sm text-gray-700">Zoom:</label>
+            <label for="zoomSlider" class="zoom-label">Zoom Out</label>
             <input type="range" id="zoomSlider" min="0.3642" max="10" step="0.1" value="1">
+            <label for="zoomSlider" class="zoom-label">Zoom In</label>
         </div>
 
         <div class="search-wrapper">
@@ -446,9 +472,10 @@
     </div>
 
     <script>
-        // Declare rawTimelineData globally so it can be assigned after fetch
+        // Declare rawTimelineData and personsData globally
         let rawTimelineData = [];
-        let zoomFactor = 1; // Global zoom factor
+        let personsData = [];
+        let zoomFactor = 1;
 
         // --- NEW: Color mapping for subCategories ---
         const subCategoryColors = {
@@ -472,78 +499,70 @@
             'default': '#6b7280' // Gray 500
         };
 
-        // Constants for timeline display
         const MIN_DISPLAY_YEAR = -5000;
         const MAX_DISPLAY_YEAR = 2025;
-        const BASE_PIXELS_PER_YEAR = 0.5; // This determines the base unzoomed width
+        const BASE_PIXELS_PER_YEAR = 0.5;
 
-        // Function to convert year to pixel position, incorporating zoom
+        // --- FIXED: hasOverlap function moved to a global, accessible location ---
+        function hasOverlap(item1, item2) {
+            return item1.startYear < item2.endYear && item2.startYear < item1.endYear;
+        }
+
         function yearToPixels(year) {
             return (year - MIN_DISPLAY_YEAR) * BASE_PIXELS_PER_YEAR * zoomFactor;
         }
 
-        // Function to fetch the JSON data
+        // NEW: Function to parse lifespan string and get midpoint
+        function parseLifespanAndMidpoint(lifespan) {
+            const matches = lifespan.match(/(\d+)\s*(BC|AD)?/g);
+            if (!matches || matches.length < 2) return null;
+            
+            let startYear = parseInt(matches[0]);
+            let endYear = parseInt(matches[1]);
+            
+            if (matches[0].includes('BC')) startYear *= -1;
+            if (matches[1].includes('BC')) endYear *= -1;
+
+            if (startYear > endYear) {
+                [startYear, endYear] = [endYear, startYear];
+            }
+
+            const midpoint = startYear + (endYear - startYear) / 2;
+            return midpoint;
+        }
+
+        // --- MODIFIED to fetch both data sources ---
         async function fetchTimelineData() {
             try {
-                const response = await fetch('./timelineData.json'); // Path to your JSON file
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                const [timelineResponse, personsResponse] = await Promise.all([
+                    fetch('./timelineData.json'),
+                    fetch('./personsData.json')
+                ]);
+
+                if (!timelineResponse.ok || !personsResponse.ok) {
+                    throw new Error('Error fetching timeline data.');
                 }
-                rawTimelineData = await response.json(); // Assign fetched data
-                renderTimeline(); // Call renderTimeline AFTER data is loaded
-                populateKeyIndex(); // Populate the key index after rendering
+                rawTimelineData = await timelineResponse.json();
+                personsData = await personsResponse.json();
+                renderTimeline();
+                populateKeyIndex();
             } catch (error) {
-                console.error("Error fetching timeline data:", error);
-                // Display an error message on the page if data fails to load
+                console.error("Error fetching data:", error);
                 document.getElementById('timeline').innerHTML = '<p class="text-center text-red-500">Failed to load timeline data. Please check the console for errors.</p>';
             }
         }
 
-        // NEW: Function to populate the key index
-        function populateKeyIndex() {
-            const keyIndex = document.getElementById('timelineKey');
-            keyIndex.innerHTML = '';
-            
-            const uniqueSubCategories = [...new Set(rawTimelineData.map(item => item.subCategory))].sort();
-            
-            uniqueSubCategories.forEach(subCategory => {
-                const color = subCategoryColors[subCategory] || subCategoryColors.default;
-                
-                const keyItem = document.createElement('div');
-                keyItem.className = 'flex items-center gap-2';
-                keyItem.innerHTML = `
-                    <div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0;"></div>
-                    <span class="whitespace-nowrap">${subCategory}</span>
-                `;
-                keyIndex.appendChild(keyItem);
-            });
-        }
-
-
-        // Modal elements
-        const timelineModal = document.getElementById('timelineModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalYears = document.getElementById('modalYears');
-        const modalDescription = document.getElementById('modalDescription');
-        const modalKeyFigures = document.getElementById('modalKeyFigures');
-        const modalRegion = document.getElementById('modalRegion');
-        const modalSourceLink = document.getElementById('modalSourceLink');
-        const getInsightsBtn = document.getElementById('getInsightsBtn');
-        const llmResponseArea = document.getElementById('llmResponseArea');
-        const llmResponseText = document.getElementById('llmResponseText');
-        const llmLoadingSpinner = document.getElementById('llmLoadingSpinner');
-
-        // Global tooltip elements
-        const globalTooltip = document.getElementById('globalTooltip');
-        const globalTooltipTitle = document.getElementById('globalTooltipTitle');
-        const globalTooltipYears = document.getElementById('globalTooltipYears');
-        const globalTooltipDescription = document.getElementById('globalTooltipDescription');
-        const globalTooltipKeyFigures = document.getElementById('globalTooltipKeyFigures');
-        const globalTooltipRegion = document.getElementById('globalTooltipRegion');
-        const globalTooltipArrow = globalTooltip.querySelector('.tooltip-arrow');
-
-        // Function to open the modal
+        // --- NEW: Function to open a modal for a given item ---
         function openModal(item) {
+            const modalTitle = document.getElementById('modalTitle');
+            const modalYears = document.getElementById('modalYears');
+            const modalDescription = document.getElementById('modalDescription');
+            const modalKeyFigures = document.getElementById('modalKeyFigures');
+            const modalRegion = document.getElementById('modalRegion');
+            const modalSourceLink = document.getElementById('modalSourceLink');
+            const timelineModal = document.getElementById('timelineModal');
+            const getInsightsBtn = document.getElementById('getInsightsBtn');
+
             modalTitle.textContent = item.eventName;
             modalYears.textContent = `${item.startYear < 0 ? Math.abs(item.startYear) + ' BC' : item.startYear} - ${item.endYear === 2025 ? 'Present' : (item.endYear < 0 ? Math.abs(item.endYear) + ' BC' : item.endYear)}`;
             modalDescription.textContent = item.description;
@@ -551,8 +570,8 @@
             modalRegion.textContent = item.region || 'N/A';
             modalSourceLink.href = item.sourceUrl || '#';
 
-            llmResponseArea.classList.remove('hidden');
             llmResponseText.textContent = '';
+            llmResponseArea.classList.add('hidden');
             llmLoadingSpinner.classList.add('flex');
             llmLoadingSpinner.classList.remove('hidden');
             getInsightsBtn.disabled = true;
@@ -566,12 +585,20 @@
             hideGlobalTooltip();
         }
 
-        // Function to close the modal
+        // --- NEW: Function to close the modal ---
         function closeModal() {
-            timelineModal.classList.remove('open');
+            document.getElementById('timelineModal').classList.remove('open');
         }
 
-        // Function to show global tooltip
+        // --- NEW: Tooltip functions moved to global scope ---
+        const globalTooltip = document.getElementById('globalTooltip');
+        const globalTooltipTitle = document.getElementById('globalTooltipTitle');
+        const globalTooltipYears = document.getElementById('globalTooltipYears');
+        const globalTooltipDescription = document.getElementById('globalTooltipDescription');
+        const globalTooltipKeyFigures = document.getElementById('globalTooltipKeyFigures');
+        const globalTooltipRegion = document.getElementById('globalTooltipRegion');
+        const globalTooltipArrow = globalTooltip.querySelector('.tooltip-arrow');
+
         function showGlobalTooltip(item, mouseX, mouseY) {
             globalTooltipTitle.textContent = item.eventName;
             globalTooltipYears.textContent = `${item.startYear < 0 ? Math.abs(item.startYear) + ' BC' : item.startYear} - ${item.endYear === 2025 ? 'Present' : (item.endYear < 0 ? Math.abs(item.endYear) + ' BC' : item.endYear)}`;
@@ -585,16 +612,13 @@
             let tooltipLeft = mouseX + offsetX;
             let tooltipTop = mouseY - globalTooltip.offsetHeight - offsetY;
 
-            // Adjust if it goes off-screen to the right
             if (tooltipLeft + globalTooltip.offsetWidth > window.innerWidth - 10) {
                 tooltipLeft = window.innerWidth - globalTooltip.offsetWidth - 10;
             }
-            // Adjust if it goes off-screen to the left
             if (tooltipLeft < 10) {
                 tooltipLeft = 10;
             }
 
-            // Adjust if it goes off-screen to the top (move below cursor instead)
             const headerHeight = document.querySelector('.main-header').offsetHeight;
             if (mouseY - globalTooltip.offsetHeight - offsetY < headerHeight + 10) {
                 tooltipTop = mouseY + offsetY;
@@ -614,81 +638,12 @@
             globalTooltip.classList.add('visible');
         }
 
-        // Function to hide global tooltip
         function hideGlobalTooltip() {
             document.getElementById("globalTooltip").classList.remove("visible");
         }
 
-        // Event listener for the "Get Deeper Insights" button
-        getInsightsBtn.addEventListener('click', async () => {
-            const eventName = getInsightsBtn.dataset.eventName;
-            const startYear = getInsightsBtn.dataset.startYear;
-            const endYear = getInsightsBtn.dataset.endYear;
-            const description = getInsightsBtn.dataset.description;
 
-            llmResponseArea.classList.remove('hidden');
-            llmResponseText.textContent = '';
-            llmLoadingSpinner.classList.add('flex');
-            llmLoadingSpinner.classList.remove('hidden');
-            getInsightsBtn.disabled = true;
-
-            const prompt = `Provide a more detailed and interesting summary of the historical entity: "${eventName}" (active from ${startYear < 0 ? Math.abs(startYear) + ' BC' : startYear} to ${endYear === '2025' ? 'Present' : (endYear < 0 ? Math.abs(endYear) + ' BC' : endYear)}). The current brief description is: "${description}". Focus on its key achievements, challenges, and lasting legacy in about 150-200 words.`;
-
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-
-            const payload = { contents: chatHistory };
-            // IMPORTANT: Replace YOUR_GEMINI_API_KEY with your actual API key
-            const apiKey = "YOUR_GEMINI_API_KEY";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error.message}`);
-                }
-
-                const result = await response.json();
-
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    llmResponseText.textContent = text;
-                } else {
-                    llmResponseText.textContent = "Could not generate insights. Unexpected API response structure.";
-                }
-            } catch (error) {
-                console.error("Error calling Gemini API:", error);
-                llmResponseText.textContent = `Failed to get insights: ${error.message}. Please try again.`;
-            } finally {
-                llmLoadingSpinner.classList.remove('flex');
-                llmLoadingSpinner.classList.add('hidden');
-                getInsightsBtn.disabled = false;
-            }
-        });
-
-        function hasOverlap(item1, item2) {
-            return item1.startYear < item2.endYear && item2.startYear < item1.endYear;
-        }
-
-        // Debounce utility function
-        function debounce(func, delay) {
-            let timeout;
-            return function() {
-                const context = this;
-                const args = arguments;
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), delay);
-            };
-        }
-
+        // --- MODIFIED to accept dataToRender parameter ---
         function renderTimeline(dataToRender = rawTimelineData) {
             const timelineDiv = document.getElementById('timeline');
             timelineDiv.innerHTML = '';
@@ -697,11 +652,11 @@
             stickyAxisContainerInner.innerHTML = '';
             
             const timePeriods = [
-                { name: "Ancient Civilizations", startYear: -5000, endYear: -1000, color: "#e0f2f7" },
-                { name: "Classical Antiquity", startYear: -1000, endYear: 500, color: "#d1e8ef" },
-                { name: "Middle Ages", startYear: 500, endYear: 1500, color: "#c2e0e8" },
-                { name: "Early Modern Period", startYear: 1500, endYear: 1800, color: "#b3d8e0" },
-                { name: "Modern Period", startYear: 1800, endYear: 2025, color: "#a4d0d8" }
+                { name: "Ancient Civilizations", startYear: -5000, endYear: -1000, color: "#4ade80" },
+                { name: "Classical Antiquity", startYear: -1000, endYear: 500, color: "#fca5a5" },
+                { name: "Middle Ages", startYear: 500, endYear: 1500, color: "#fb923c" },
+                { name: "Early Modern Period", startYear: 1500, endYear: 1800, color: "#a5b4fc" },
+                { name: "Modern Period", startYear: 1800, endYear: 2025, color: "#f0abfc" }
             ];
         
             const axisDiv = document.createElement('div');
@@ -723,7 +678,6 @@
             }
         
             const lanes = [];
-        
             const consolidatedTimelineData = [];
             const seenEventNames = new Set();
         
@@ -852,6 +806,47 @@
                 });
                 timelineDiv.appendChild(laneDiv);
             });
+
+            // NEW: Render person icons
+            if (personsData && personsData.length > 0) {
+                const personLaneDiv = document.createElement('div');
+                personLaneDiv.className = 'timeline-lane';
+                personLaneDiv.style.width = `${yearToPixels(MAX_DISPLAY_YEAR)}px`;
+
+                personsData.forEach(person => {
+                    const midpointYear = parseLifespanAndMidpoint(person.lifespan);
+                    if (midpointYear !== null && midpointYear >= MIN_DISPLAY_YEAR && midpointYear <= MAX_DISPLAY_YEAR) {
+                        const personIcon = document.createElement('div');
+                        personIcon.className = 'person-icon';
+                        personIcon.onclick = () => openModal({
+                            eventName: person.personName,
+                            startYear: person.lifespan.split('–')[0],
+                            endYear: person.lifespan.split('–')[1],
+                            description: person.knownFor,
+                            keyFigures: person.profession,
+                            region: person.associatedWith,
+                            sourceUrl: person.sourceUrl
+                        });
+
+                        personIcon.addEventListener('mouseover', (event) => showGlobalTooltip({
+                            eventName: person.personName,
+                            startYear: person.lifespan.split('–')[0],
+                            endYear: person.lifespan.split('–')[1],
+                            description: person.knownFor,
+                            keyFigures: person.profession,
+                            region: person.associatedWith,
+                            sourceUrl: person.sourceUrl
+                        }, event.clientX, event.clientY));
+                        personIcon.addEventListener('mouseout', hideGlobalTooltip);
+
+                        const position = yearToPixels(midpointYear);
+                        personIcon.style.left = `${position}px`;
+
+                        personLaneDiv.appendChild(personIcon);
+                    }
+                });
+                timelineDiv.prepend(personLaneDiv);
+            }
         
             const actualTimelineHeight = timelineDiv.scrollHeight;
             document.querySelectorAll('.timeline-period-background').forEach(periodDiv => {
@@ -861,25 +856,32 @@
             const mainTimelineScrollWrapper = document.getElementById('mainTimelineContentScroll');
             const bottomAxisContent = document.getElementById('bottomTimelineAxis');
         
-            if (bottomAxisContent && !mainTimelineScrollWrapper.dataset.scrollListenerAttached) {
-                const debouncedScrollHandler = debounce(() => {
-                    if (bottomAxisContent) {
-                        bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
-                    }
-                }, 5);
-        
-                const handlerName = `scrollHandler_${Date.now()}`;
-                window[handlerName] = debouncedScrollHandler;
-                mainTimelineScrollWrapper.addEventListener('scroll', window[handlerName]);
-                mainTimelineScrollWrapper.dataset.currentScrollHandler = handlerName;
+            // If a listener was previously attached, remove it to prevent duplicates
+            if (mainTimelineScrollWrapper.dataset.currentScrollHandler) {
+                mainTimelineScrollWrapper.removeEventListener('scroll', window[mainTimelineScrollWrapper.dataset.currentScrollHandler]);
+                delete window[mainTimelineScrollWrapper.dataset.currentScrollHandler]; // Clean up global reference
+                delete mainTimelineScrollWrapper.dataset.currentScrollHandler;
             }
-        
+
+            // Define the debounced handler
+            const debouncedScrollHandler = debounce(() => {
+                if (bottomAxisContent) {
+                    bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
+                }
+            }, 5); // Debounce to smooth updates
+
+            // Give the handler a unique name on the window object and attach it
+            const handlerName = `scrollHandler_${Date.now()}`;
+            window[handlerName] = debouncedScrollHandler; // Store reference to be able to remove it
+            mainTimelineScrollWrapper.addEventListener('scroll', window[handlerName]);
+            mainTimelineScrollWrapper.dataset.currentScrollHandler = handlerName; // Store name for removal
+
+            // Ensure the initial state is synced too
             if (bottomAxisContent) {
                  bottomAxisContent.style.transform = `translateX(-${mainTimelineScrollWrapper.scrollLeft}px)`;
             }
         }
 
-        // NEW: Filter function to handle search
         function filterTimeline(searchTerm) {
             let filteredData = rawTimelineData.filter(item => {
                 const searchString = searchTerm.toLowerCase();
@@ -893,7 +895,6 @@
             renderTimeline(filteredData);
         }
 
-        // Event listener for the zoom slider
         document.getElementById("zoomSlider").addEventListener("input", (e) => {
             const mainTimelineScrollWrapper = document.getElementById('mainTimelineContentScroll');
             const oldScrollLeft = mainTimelineScrollWrapper.scrollLeft;
@@ -917,13 +918,11 @@
             });
         });
 
-        // NEW: Event listener for the search bar
         document.getElementById("timelineSearch").addEventListener("input", (e) => {
             const searchTerm = e.target.value;
             filterTimeline(searchTerm);
         });
 
-        // NEW: Function to populate the key index
         function populateKeyIndex() {
             const keyIndex = document.getElementById('timelineKey');
             keyIndex.innerHTML = '';
@@ -941,10 +940,28 @@
                 `;
                 keyIndex.appendChild(keyItem);
             });
+
+            // NEW: Add "Historical Figures" to the key index
+            const personKeyItem = document.createElement('div');
+            personKeyItem.className = 'flex items-center gap-2';
+            personKeyItem.innerHTML = `
+                <div style="background-color: #1a202c; width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;"></div>
+                <span class="whitespace-nowrap">Historical Figures</span>
+            `;
+            keyIndex.appendChild(personKeyItem);
         }
         
-        // Initial fetch and render on window load
         window.onload = fetchTimelineData;
+
+        function debounce(func, delay) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
     </script>
 </body>
 </html>
