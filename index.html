@@ -9,9 +9,6 @@
 
       gtag('config', 'G-M7HEN706BR');
     </script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5565386656865976"
-     crossorigin="anonymous">
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timeline of Everything (5000 BC - Present)</title>
@@ -576,6 +573,7 @@
         const MAX_DISPLAY_YEAR = 2025;
         const BASE_PIXELS_PER_YEAR = 0.5;
 
+        // --- FIXED: hasOverlap function moved to a global, accessible location ---
         function hasOverlap(item1, item2) {
             return item1.startYear < item2.endYear && item2.startYear < item1.endYear;
         }
@@ -584,17 +582,23 @@
             return (year - MIN_DISPLAY_YEAR) * BASE_PIXELS_PER_YEAR * zoomFactor;
         }
 
-        // NEW: Function to parse lifespan string and get midpoint
+        // --- FIXED: parseLifespanAndMidpoint function to correctly handle BC dates ---
         function parseLifespanAndMidpoint(lifespan) {
-            const matches = lifespan.match(/(\d+)\s*(BC|AD)?/g);
+            // This regex correctly extracts the two numbers from the string, ignoring 'c.'
+            const matches = lifespan.match(/(\d+)/g);
             if (!matches || matches.length < 2) return null;
-            
+
             let startYear = parseInt(matches[0]);
             let endYear = parseInt(matches[1]);
             
-            if (matches[0].includes('BC')) startYear *= -1;
-            if (matches[1].includes('BC')) endYear *= -1;
+            // If 'BC' is present in the original string, make both years negative.
+            const isBC = lifespan.toLowerCase().includes('bc');
+            if (isBC) {
+                startYear *= -1;
+                endYear *= -1;
+            }
 
+            // Ensure startYear is the smaller (earlier) year for correct range calculation
             if (startYear > endYear) {
                 [startYear, endYear] = [endYear, startYear];
             }
@@ -643,10 +647,10 @@
             modalSourceLink.href = item.sourceUrl || '#';
 
             llmResponseText.textContent = '';
-            llmResponseArea.classList.add('hidden');
             llmLoadingSpinner.classList.add('flex');
             llmLoadingSpinner.classList.remove('hidden');
-            getInsightsBtn.disabled = true;
+            llmResponseArea.classList.add('hidden');
+            getInsightsBtn.disabled = false;
 
             getInsightsBtn.dataset.eventName = item.eventName;
             getInsightsBtn.dataset.startYear = item.startYear;
